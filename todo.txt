@@ -1,0 +1,3 @@
+echo $DISPLAY
+export DISPLAY="`grep nameserver /etc/resolv.conf | sed 's/nameserver //'`:0"
+echo xfce4-session > ~/.xsession
