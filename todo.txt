@@ -1,3 +1,10 @@
-echo $DISPLAY
+Echo $DISPLAY
 export DISPLAY="`grep nameserver /etc/resolv.conf | sed 's/nameserver //'`:0"
 echo xfce4-session > ~/.xsession
+
+
+data stuff to organize ymca by letter
+plug in these two letters
+and then quantile regression
+
+21 times

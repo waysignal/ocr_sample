@@ -1,6 +1,7 @@
 import cv2
 import pytesseract
 import random
+import time 
 import re
 
 
@@ -8,14 +9,16 @@ pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
 
 img_cv = cv2.imread(r'image.png')
 print(img_cv.shape)
-scale = 4
-img = cv2.resize(img_cv, (0, 0), None, scale, scale)
+
+
+
 class PointsStore:
     def __init__(self):
         self.points = []
 
 def mousePoints(event,x,y,flags,myPoints:PointsStore):
     global counter,point1,point2,counter2,circles,myColor
+    
     if event == cv2.EVENT_LBUTTONDOWN:
         if counter==0:
             point1=int(x//scale),int(y//scale)
@@ -30,15 +33,21 @@ def mousePoints(event,x,y,flags,myPoints:PointsStore):
 
 def Crop(data_vec: list, roi:list) :
     for x,r in enumerate(roi):
+        #img_crop = img_cv[170:205, 270:330 ]
+        print(r[0][1], r[1][1])
         img_crop = img_cv[r[0][1]:r[1][1], r[0][0]:r[1][0]]
         while True: 
             cv2.imshow(str(x), img_crop)
+
             the_word = pytesseract.image_to_string(img_crop, config = '--psm 10').strip()
+            
             if cv2.waitKey(1) & 0xFF == ord('s'):
                 data_vec.append(the_word[0])
                 print(the_word[0])
                 break
 
+
+scale = 4
 points1 = PointsStore()
 circles = []
 counter = 0
@@ -46,19 +55,26 @@ counter2 = 0
 point1=[]
 point2=[]
 
-while True:
+img = img_cv
+img = cv2.resize(img, (0, 0), None, scale, scale)
+
+
+while True==False:
+    # To Display points
     for x,y,color in circles:
         cv2.circle(img,(x,y),3,color,cv2.FILLED)
     cv2.imshow("Original Image ", img)
     cv2.setMouseCallback("Original Image ", mousePoints, points1)
     if cv2.waitKey(1) & 0xFF == ord('s'):
+        #print(points1.points)
         roi = points1.points
+        #print("roi",roi)
         break
-
 #roi = [[(94, 74), (128, 96)], [(226, 108), (256, 130)], [(36, 180), (62, 210)], [(420, 180), (446, 204)]]
-data_vec = []
-Crop(data_vec, roi)
+data_vec = ['y','m','c','a']
+#Crop(data_vec, roi)
 print(data_vec)
+##^ completed char extractio and now in vec
 
 song_vec= ["Young man, there's no need to feel down",
 "I said, young man, pick yourself off the ground",
@@ -117,80 +133,6 @@ song_vec= ["Young man, there's no need to feel down",
 "Young man, young man I was once in your shoes",
 "Young man, young man I was down with the blues, 0"]
 
-song_vec_2 = ["Yahoo!",
-"This is your celebration",
-"Yahoo!",
-"This is your celebration",
-"Celebrate good times, come on",
-"Let's celebrate",
-"Celebrate good times, come on",
-"Let's celebrate",
-"There's a party going on right here",
-"A celebration to last throughout the years",
-"So bring your good times and your laughter too",
-"We gonna celebrate your party with you, come on",
-"Celebration",
-"Let's all celebrate and have a good time",
-"Celebration",
-"We gonna celebrate and have a good time",
-"It's time to come together",
-"It's up to you",
-"What's your pleasure",
-"Everyone around the world, come on",
-"Yahoo!",
-"It's a celebration",
-"Yahoo!",
-"Celebrate good times, come on",
-"It's a celebration",
-"Celebrate good times, come on",
-"Let's celebrate",
-"There's a party going on right here",
-"A dedication to last throughout the years",
-"So bring your good times and your laughter too",
-"We gonna celebrate your party with you",
-"Come on now",
-"Celebration",
-"Let's all celebrate and have a good time, yeah, yeah",
-"Celebration",
-"We gonna celebrate and have a good time",
-"It's time to come together",
-"It's up to you",
-"What's your pleasure",
-"Everyone around the world, come on",
-"Yahoo!",
-"It's a celebration",
-"Yahoo!",
-"It's a celebration",
-"Celebrate good times, come on",
-"Let's celebrate, come on now",
-"Celebrate good times, come on",
-"Let's celebrate",
-"We're gonna have a good time tonight",
-"Let's celebrate, it's all right",
-"We're gonna have a good time tonight",
-"Let's celebrate, it's all right, baby",
-"We're gonna have a good time tonight (Celebration)",
-"Let's celebrate, it's all right",
-"We're gonna have a good time tonight (Celebration)",
-"Let's celebrate, it's all right",
-"Yahoo!",
-"Yahoo!",
-"Celebrate good times, come on",
-"Ooh, ooh, ooh, hoo",
-"Celebrate good times, come on",
-"It's a celebration",
-"Celebrate good times, come on {Let's celebrate}",
-"Come on and celebrate tonight",
-"Celebrate good times, come on",
-"'Cause everything's gonna be all right",
-"Let's celebrate",
-"Celebrate good times, come on {Let's celebrate}",
-"Ooh, hoo, hoo",
-"Celebrate good times, come on",
-"Let's have a great time, celebrate",
-"Celebrate good times, come on"]
-
-song_vec.extend(song_vec_2)
 
 for row,words in enumerate(song_vec): 
     clean =  re.sub('[^a-zA-Z0]+','', words)
@@ -204,66 +146,50 @@ for rows,words in enumerate(song_vec):
     song_vec[rows] = words.replace('0',final_word)
     song_vec[rows] = song_vec[rows].lower()
 
+##^ vec is cleaned and upper cased ready to work with
 print(song_vec)
 
 import numpy as np
 import pandas as pd
 
-df = pd.DataFrame(columns=['row','row_length','character','value'])
+df = pd.DataFrame(columns=['row','character','value'])
 
 values = {chr(i): i - 96 for i in range(ord("a"), ord("a") + 26 )}
 
 for index, row in enumerate(song_vec):
     for element in row:
-        df.loc[len(df)] = [index, len(row), element,values[element]]
+        df.loc[len(df)] = [index, element,values[element]]
 
-print(df.head())
 
-df2 = df.groupby(['row','row_length'])['value'].sum().reset_index()
-print(df2.head())
-df = df2.drop('row', axis=1)
 print(df.head())
 
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import matplotlib.pyplot as plt
-from statsmodels.regression.quantile_regression import QuantReg
 
-mod = smf.quantreg('value ~ row_length', df)
-res = mod.fit(q=0.5)
-quantiles = np.arange(0.05, 0.96, 0.2)
-
-def fit_model(q):
-    res = mod.fit(q=q)
-    return [q, res.params["Intercept"], res.params["row_length"]] + res.conf_int().loc[
-        "row_length"
-    ].tolist()
-
-models = [fit_model(x) for x in quantiles]
-models = pd.DataFrame(models, columns=["q", "a", "b", "lb", "ub"])
-print(models)
-fig, ax = plt.subplots(1,1,figsize=(6, 4))
+df = df.drop('character', axis=1)
+model = smf.quantreg('value ~ row',
+                     df).fit(q=0.5)
  
-row = df['row_length'].to_numpy()
+
+print(model.summary())
+# define figure and axis
+fig, ax = plt.subplots(figsize=(10, 8))
+ 
+
+row = df['row'].to_numpy()
 value = df['value'].to_numpy()
-get_y = lambda a, b: a + b * row
-
-for i in range(models.shape[0]):
-    y = get_y(models.a[i], models.b[i])
-    ax.plot(row, y, linestyle="dotted", color="grey")
-
-ax.plot(row, y, color='black')
-ax.scatter(row, value, alpha=.2)
-ax.set_xlabel('# of characters in lyric row', fontsize=10)
-ax.set_ylabel('Summed value of lyric row', fontsize=10)
-fig.savefig('quantile_regression_quantiles.png')
-
-fig, ax = plt.subplots(1,1,figsize=(6, 4))
-n = models.shape[0]
-p1 = ax.plot(models.q, models.b, color="black", label="Quantile Reg.")
-p2 = ax.plot(models.q, models.ub, linestyle="dotted", color="black")
-p3 = ax.plot(models.q, models.lb, linestyle="dotted", color="black")
-ax.set_ylabel(r"$\beta_{row_length}$")
-ax.set_xlabel("Quantiles of the conditional value distribution")
-ax.legend()
+# get y values
+y_line = lambda a, b: a + row
+y = y_line(model.params['Intercept'],
+           model.params['row'])
+ 
+# Plotting data points with the help
+# pf quantile regression equation
+ax.plot(df['row'], y, color='black')
+ax.scatter(row, value, alpha=.3)
+ax.set_xlabel('row', fontsize=20)
+ax.set_ylabel('value', fontsize=20)
+ 
+# Save the plot
 fig.savefig('quantile_regression.png')
